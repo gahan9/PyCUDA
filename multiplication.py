@@ -13,24 +13,36 @@ import numpy
 
 from pycuda.compiler import SourceModule
 mod = SourceModule("""
-__global__ void multiply_them(float *dest, float *a, float *b)
+__global__ void multiply(float *dest, float *a, float *b)
 {
   const int i = threadIdx.x;
   dest[i] = a[i] * b[i];
 }
 """)
 
-if __name__ == "__main__":
-    multiply_them = mod.get_function("multiply_them")
+multiply = mod.get_function("multiply")
 
-    a = numpy.random.randn(400).astype(numpy.float32)
-    b = numpy.random.randn(400).astype(numpy.float32)
 
-    dest = numpy.zeros_like(a)
-    multiply_them(
-        drv.Out(dest), drv.In(a), drv.In(b),
-        block=(400, 1, 1), grid=(1, 1))
+class Multiply(object):
+    def __init__(self):
+        self.a = numpy.random.randn(400).astype(numpy.float32)
+        self.b = numpy.random.randn(400).astype(numpy.float32)
+        self.dest = numpy.zeros_like(self.a)
 
-    print("Result:----\n", dest)
+    def multiply(self):
+        multiply = mod.get_function("multiply")
+        multiply(
+            drv.Out(self.dest), drv.In(self.a), drv.In(self.b),
+            block=(400, 1, 1), grid=(1, 1))
+
+
+def test():
+    m = Multiply()
+    m.multiply()
+    print("Result:----\n", m.dest)
     print("Verifying....")
-    print(dest - a*b)
+    print(m.dest - m.a*m.b)
+
+
+if __name__ == "__main__":
+    test()
