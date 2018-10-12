@@ -4,11 +4,9 @@
 Author: Gahan Saraiya
 GiT: https://github.com/gahan9
 StackOverflow: https://stackoverflow.com/users/story/7664524
-
-Implementation of linear hashing
 """
 import pycuda.autoinit
-import pycuda.driver as drv
+from pycuda import driver
 import numpy
 
 from pycuda.compiler import SourceModule
@@ -18,9 +16,13 @@ __global__ void multiply(float *dest, float *a, float *b)
   const int i = threadIdx.x;
   dest[i] = a[i] * b[i];
 }
-""")
 
-multiply = mod.get_function("multiply")
+__global__ void addition(float *dest, float *a, float *b)
+{
+  const int i = threadIdx.x;
+  dest[i] = a[i] + b[i];
+}
+""")
 
 
 class Multiply(object):
@@ -32,7 +34,13 @@ class Multiply(object):
     def multiply(self):
         multiply = mod.get_function("multiply")
         multiply(
-            drv.Out(self.dest), drv.In(self.a), drv.In(self.b),
+            driver.Out(self.dest), driver.In(self.a), driver.In(self.b),
+            block=(400, 1, 1), grid=(1, 1))
+
+    def addition(self):
+        addition = mod.get_function("addition")
+        addition(
+            driver.Out(self.dest), driver.In(self.a), driver.In(self.b),
             block=(400, 1, 1), grid=(1, 1))
 
 
