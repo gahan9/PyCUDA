@@ -39,7 +39,7 @@ class Vector(object):
         # self.a = numpy.random.randn(self.total_elements).astype(numpy.float32)
         # self.b = numpy.random.randn(self.total_elements).astype(numpy.float32)
         self.a = numpy.array([i for i in range(10)]).astype(numpy.float32)
-        self.result = numpy.zeros_like(self.a)
+        self.result = 0.0
 
     def sum(self, blocks=None, threads=1):
         blocks = blocks if blocks else self.total_elements
