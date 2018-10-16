@@ -19,6 +19,18 @@ __global__ void addition(float *result, float *a, float *b)
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     result[index] = a[index] + b[index];
 }
+
+__global__ void multiplication(float *result, float *a, float *b)
+{
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    result[index] = a[index] * b[index];
+}
+
+__global__ void subtraction(float *result, float *a, float *b)
+{
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    result[index] = a[index] - b[index];
+}
 """)
 
 

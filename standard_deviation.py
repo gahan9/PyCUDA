@@ -1,33 +1,69 @@
-# Import and initialize PyCuda
-import pycuda.driver as cuda
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+"""
+Author: Gahan Saraiya
+GiT: https://github.com/gahan9
+StackOverflow: https://stackoverflow.com/users/story/7664524
+
+Vector Addition in CUDA
+"""
+import numpy
+import pycuda.autoinit
+from pycuda import driver
+
 from pycuda.compiler import SourceModule
-import pycuda.autoinit  # optional use >> reason: initialization, context creation, and cleanup can also be performed manually
 
-import numpy  # utilized to transfer data onto the device; transfer data from numpy arrays on the host
-
-
-a = numpy.random.randn(4, 4)   # generate random array
-# require conversion because variable a consists of double precision numbers,
-# but most nVidia devices only support single precision
-a = a.astype(numpy.float32)
-
-# allocate memory & transfer data to gpu
-a_gpu = cuda.to_device(a)
-
-
-# write code to double each entry in a_gpu
 mod = SourceModule("""
-    __global__ void sum(float *a, float b)
-    {
-        int idx = threadIdx.x;
-        a[idx] *= 2;
+__device__ int summation(float *a, int n)
+{
+    if (n == 1){
+        return a[0];
     }
+    else if( n == 2 ){
+        return a[0] + a[1];
+    }
+    else
+        return summation(a, n/2) * summation(a, n - (n/2));
+}
+
+__global__ float sum(float result, float *a, int number_of_elements)
+{
+    # int index = threadIdx.x + blockIdx.x * blockDim.x;
+    # result[index] = a[index] + b[index];
+    result = summation(a, number_of_elements);
+}
 """)
 
-sum = mod.get_function("doublify")
-sum(a_gpu, block=(4, 4, 1))
 
-# fetch the data back from the GPU and display it
-a_doubled = cuda.from_device_like(devptr=a_gpu, other_ary=a)  # above two lines of code clubbed in one now
-print(a_doubled)
-print(a)
+class Vector(object):
+    def __init__(self, total_elements=512):
+        self.total_elements = total_elements
+        # self.a = numpy.random.randn(self.total_elements).astype(numpy.float32)
+        # self.b = numpy.random.randn(self.total_elements).astype(numpy.float32)
+        self.a = numpy.array([i for i in range(10)])
+        self.result = numpy.zeros_like(self.a)
+
+    def sum(self, blocks=None, threads=1):
+        blocks = blocks if blocks else self.total_elements
+        sum_in_cuda = mod.get_function("sum")
+        sum_in_cuda(
+            driver.Out(self.result), driver.In(self.a), driver.In(self.total_elements),
+            block=(blocks, 1, 1), grid=(512, 512))  # block = (blocks, threads, 1)
+
+
+def test(array_size=400):
+    vector_obj = Vector(array_size)
+    vector_obj.sum(blocks=512, threads=1)
+    print("Vector a:---\n{}".format(vector_obj.a))
+    # print("Vector b:---\n{}".format(vector_obj.b))
+    print("(device)Result:----\n", vector_obj.result)
+    print("(host)Result:----\n", sum(vector_obj.a))
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        array_size = int(sys.argv[1])
+        test(array_size)
+    else:
+        test()
