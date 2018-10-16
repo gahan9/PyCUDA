@@ -26,7 +26,7 @@ __device__ int summation(float *a, int n)
         return summation(a, n/2) * summation(a, n - (n/2));
 }
 
-__global__ void sum(float *result, float *a, int *number_of_elements)
+__global__ void sum(float *result, float *a, float *number_of_elements)
 {
     result[0] = summation(a, number_of_elements[0]);
 }
@@ -47,8 +47,12 @@ class Vector(object):
         blocks = blocks if blocks else self.total_elements
         sum_in_cuda = mod.get_function("sum")
         sum_in_cuda(
-            driver.Out(self.result), driver.In(self.a), driver.In(self.total_elements),
-            block=(blocks, 1, 1), grid=(512, 512))  # block = (blocks, threads, 1)
+            driver.Out(self.result),
+            driver.In(self.a),
+            driver.In(self.total_elements),
+            block=(blocks, 1, 1),
+            grid=(1, 1)
+        )
 
 
 def test(array_size=400):
