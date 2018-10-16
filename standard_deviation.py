@@ -26,9 +26,9 @@ __device__ int summation(float *a, int n)
         return summation(a, n/2) * summation(a, n - (n/2));
 }
 
-__global__ void sum(float result, float *a, int number_of_elements)
+__global__ void sum(float *result, float *a, int number_of_elements)
 {
-    result = summation(a, number_of_elements);
+    result[0] = summation(a, number_of_elements);
 }
 """)
 
@@ -39,7 +39,7 @@ class Vector(object):
         # self.a = numpy.random.randn(self.total_elements).astype(numpy.float32)
         # self.b = numpy.random.randn(self.total_elements).astype(numpy.float32)
         self.a = numpy.array([i for i in range(10)]).astype(numpy.float32)
-        self.result = 0.0
+        self.result = numpy.zeros_like(self.a)
 
     def sum(self, blocks=None, threads=1):
         blocks = blocks if blocks else self.total_elements
@@ -54,7 +54,7 @@ def test(array_size=400):
     vector_obj.sum(blocks=512, threads=1)
     print("Vector a:---\n{}".format(vector_obj.a))
     # print("Vector b:---\n{}".format(vector_obj.b))
-    print("(device)Result:----\n", vector_obj.result)
+    print("(device)Result:----\n", vector_obj.result[0])
     print("(host)Result:----\n", sum(vector_obj.a))
 
 
