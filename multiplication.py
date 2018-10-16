@@ -41,7 +41,7 @@ class Multiply(object):
         addition = mod.get_function("addition")
         addition(
             driver.Out(self.dest), driver.In(self.a), driver.In(self.b),
-            block=(400, 1, 1), grid=(1, 1))
+            block=(400, 1, 1), grid=(1, 1))  # blocks, threads = 1, 1
 
 
 def test():
