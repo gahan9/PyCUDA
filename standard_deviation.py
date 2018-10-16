@@ -28,8 +28,6 @@ __device__ int summation(float *a, int n)
 
 __global__ float sum(float result, float *a, int number_of_elements)
 {
-    # int index = threadIdx.x + blockIdx.x * blockDim.x;
-    # result[index] = a[index] + b[index];
     result = summation(a, number_of_elements);
 }
 """)
