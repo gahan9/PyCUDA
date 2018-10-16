@@ -23,25 +23,29 @@ __global__ void addition(float *result, float *a, float *b)
 
 
 class Vector(object):
-    def __init__(self):
-        self.a = numpy.random.randn(400).astype(numpy.float32)
-        self.b = numpy.random.randn(400).astype(numpy.float32)
+    def __init__(self, array_size):
+        self.a = numpy.random.randn(array_size).astype(numpy.float32)
+        self.b = numpy.random.randn(array_size).astype(numpy.float32)
         self.result = numpy.zeros_like(self.a)
 
-    def addition(self, blocks=1, threads=1):
+    def addition(self, blocks=None, threads=1):
+        blocks = blocks if blocks else len(self.a)
         addition = mod.get_function("addition")
         addition(
             driver.Out(self.result), driver.In(self.a), driver.In(self.b),
-            block=(400, 1, 1), grid=(1, 1))  # block = (blocks, threads, 1)
+            block=(blocks, threads, 1), grid=(1, 1))  # block = (blocks, threads, 1)
 
 
-def test():
-    vector_obj = Vector()
-    vector_obj.addition()
+def test(array_size=400):
+    vector_obj = Vector(array_size)
+    vector_obj.addition(blocks=512, threads=16)
     print("Vector a:---\n{}".format(vector_obj.a))
     print("Vector b:---\n{}".format(vector_obj.b))
     print("Result:----\n", vector_obj.result)
 
 
 if __name__ == "__main__":
-    pass
+    import sys
+    if len(sys.argv) > 1:
+        array_size = int(sys.argv[1])
+    test(array_size)
