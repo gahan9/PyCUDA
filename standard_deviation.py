@@ -26,7 +26,7 @@ __device__ int summation(float *a, int n)
         return summation(a, n/2) * summation(a, n - (n/2));
 }
 
-__global__ float sum(float result, float *a, int number_of_elements)
+__global__ void sum(float result, float *a, int number_of_elements)
 {
     result = summation(a, number_of_elements);
 }
