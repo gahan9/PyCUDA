@@ -25,8 +25,8 @@ __global__ void addition(float *result, float *a, float *b)
 class Vector(object):
     def __init__(self, total_elements=512):
         self.total_elements = total_elements
-        self.a = numpy.random.randn(array_size).astype(numpy.float32)
-        self.b = numpy.random.randn(array_size).astype(numpy.float32)
+        self.a = numpy.random.randn(self.total_elements).astype(numpy.float32)
+        self.b = numpy.random.randn(self.total_elements).astype(numpy.float32)
         self.result = numpy.zeros_like(self.a)
 
     def addition(self, blocks=None, threads=1):
