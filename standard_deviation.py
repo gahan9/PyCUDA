@@ -26,6 +26,12 @@ __device__ int summation(float *a, int n)
         return summation(a, n/2) * summation(a, n - (n/2));
 }
 
+__global__ void vector_add(float *a, float *b)
+{
+    int index = threadIdx.x + blockIdx.x * blockDim.x;
+    a[index] = a[index] + b[index];
+}
+
 __global__ void sum(float *result, float *a, float *number_of_elements)
 {
     result[0] = summation(a, number_of_elements[0]);
@@ -42,17 +48,27 @@ class Vector(object):
         self.a = numpy.array([i for i in range(self.total_elements)]).astype(numpy.float32)
         # self.total_elements = numpy.array([self.total_elements]).astype(numpy.float32)
         self.result = numpy.zeros_like(self.a)
+        self.vector_add = mod.get_function("vector_add")
+
+    @property
+    def cpu_bottleneck(self):
+        """
+        bottleneck limit where CPU can perform computation faster (to avoid overhead of
+        transferring data to/from GPU)
+        """
+        return 100
 
     def sum(self, blocks=None, threads=1):
-        blocks = blocks if blocks else self.total_elements
-        sum_in_cuda = mod.get_function("sum")
-        sum_in_cuda(
-            driver.Out(self.result),
-            driver.In(self.a),
-            driver.In(self.total_elements),
-            block=(blocks, 1, 1),
-            grid=(1, 1)
-        )
+        # blocks = blocks if blocks else self.total_elements
+        # split original array in to equal sub array of length equals to cpu array size
+        parallize_equal = self.total_elements - (self.total_elements % self.cpu_bottleneck)
+        arrays = numpy.array_split(self.a[:parallize_equal], self.total_elements//self.cpu_bottleneck)
+        self.result = arrays[0]
+        for i in arrays[1:]:
+            self.vector_add(
+                driver.Out(self.result), driver.In(self.result), driver.In(i),
+                block=(blocks, 1, 1), grid=(512, 512))  # block = (blocks, threads, 1)
+        return self.result.sum() + self.a[parallize_equal:].sum()
 
 
 def test(array_size=400):
