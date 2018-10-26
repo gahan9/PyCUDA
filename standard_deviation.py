@@ -44,7 +44,7 @@ class Vector(object):
         self.total_elements = total_elements
         # self.a = numpy.random.randn(self.total_elements).astype(numpy.float32)
         # self.b = numpy.random.randn(self.total_elements).astype(numpy.float32)
-        self.total_elements = 10
+        self.total_elements = 500
         self.a = numpy.array([i for i in range(self.total_elements)]).astype(numpy.float32)
         # self.total_elements = numpy.array([self.total_elements]).astype(numpy.float32)
         self.result = numpy.zeros_like(self.a)
