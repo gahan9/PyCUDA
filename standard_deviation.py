@@ -73,8 +73,8 @@ class Vector(object):
 
 def test(array_size=400):
     vector_obj = Vector(array_size)
-    vector_obj.sum(blocks=512, threads=1)
     print("Vector a:---\n{}".format(vector_obj.a))
+    vector_obj.sum(blocks=512, threads=1)
     # print("Vector b:---\n{}".format(vector_obj.b))
     print("(device)Result:----\n", vector_obj.result[0])
     print("(host)Result:----\n", sum(vector_obj.a))
