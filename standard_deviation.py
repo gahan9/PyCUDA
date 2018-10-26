@@ -64,8 +64,10 @@ class Vector(object):
         parallize_equal = self.total_elements - (self.total_elements % self.cpu_bottleneck)
         arrays = numpy.array_split(self.a[:parallize_equal], self.total_elements//self.cpu_bottleneck)
         self.result = arrays[0]
+        print("arrays:-> \n", arrays, "\nresult...._> \n", self.result)
+        addition = mod.get_function("vector_add")
         for i in arrays[1:]:
-            self.vector_add(
+            addition(
                 driver.Out(self.result), driver.In(self.result), driver.In(i),
                 block=(blocks, 1, 1), grid=(512, 512))  # block = (blocks, threads, 1)
         return self.result.sum() + self.a[parallize_equal:].sum()
@@ -78,6 +80,7 @@ def test(array_size=400):
     # print("Vector b:---\n{}".format(vector_obj.b))
     print("(device)Result:----\n", vector_obj.result[0])
     print("(host)Result:----\n", sum(vector_obj.a))
+    print("Result of verification:----\n", vector_obj.result - vector_obj.a)
 
 
 if __name__ == "__main__":
