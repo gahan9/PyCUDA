@@ -42,7 +42,8 @@ __global__ void black_and_white(float *image, int check){
     */
     int idx = threadIdx.x + (blockDim.x * blockIdx.x);
 
-    if(idx *3 < check*3){
+    // work only if pixels are in range .. the check number here is total number of pixels
+    if(idx*3 < check*3){
         int val = 0.21 * image[idx*3] + 0.71 * image[idx*3+1] + 0.07 * image[idx*3+2];
         image[idx*3] = val;
         image[idx*3+1] = val;
