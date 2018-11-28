@@ -7,6 +7,7 @@ StackOverflow: https://stackoverflow.com/users/story/7664524
 
 Convert Imange in to matrix.
 manipulate image
+i.e. Making image black and white
 """
 
 import os
@@ -21,10 +22,7 @@ from PIL import Image as PILImage
 import pycuda.autoinit
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_INPUT_DIR = os.path.join(BASE_DIR, "in")
-IMAGE_OUTPUT_DIR = os.path.join(BASE_DIR, "out")
-# initialize directory if not exist
-os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
+IMAGE_DIR = os.path.join(BASE_DIR, "in")
 
 
 kernel = """
@@ -69,8 +67,10 @@ def save_image(image_path, array):
     return True
 
 def manipulate_image(image_name, filter_function):
-    in_file = os.path.join(IMAGE_INPUT_DIR, IMAGES[0])
-    out_file = os.path.join(IMAGE_OUTPUT_DIR, IMAGES[0])
+    in_file = os.path.join(IMAGE_DIR, image_name)
+    image_ext = image_name.split('.')[-1]
+    image_out_name = ''.join(image_name.split('.')[:-1]) + '_bw'
+    out_file = os.path.join(IMAGE_DIR, image_out_name)
     image = open_image(in_file) # open image
     # store image pixels to numpy array of data type float32
     pixel_array = numpy.array(image).astype(numpy.float32)    
@@ -97,21 +97,28 @@ def manipulate_image(image_name, filter_function):
         "\nBLOCK_SIZE x grids: {}"
         "\nGrid: {}".format(block, grids, grids*BLOCK_SIZE, grid)
     )
-   
+
+    # apply filter function on matrix
     filter_function(gpu_pixel_array, total_pixels, block=block, grid=grid)
-   
+
+    # construct an empty array to store computed result by gpu
     result_array = numpy.empty_like(pixel_array)
+    # copy filtered matrix to host memory buffer from device (GPU)
     driver.memcpy_dtoh(result_array, gpu_pixel_array)
-    # On monochrome images, Pixels are uint8 [0,255].
-    # numpy.clip(bwPx, 0, 255, out=bwPx)
-    # bwPx = bwPx.astype('uint8')
-    result_array = (numpy.uint8(result_array))
-    # pil_im = PILImage.fromarray(bwPx,mode ="RGB")
+
+    # convert result array in to uint8 data type (unsigned 8 bit integer).
+    # as it is the range of pixel.
+    result_array = numpy.uint8(result_array)
+    
+    # save array as image to disk
     status = save_image(out_file, result_array)
+    print("-"*50)
+    print("Image {} converted and saved at {}".format(image_name, out_file))
+    print("-"*50)
     return status
 
 
 if __name__ == "__main__":
-    IMAGES = os.listdir(IMAGE_INPUT_DIR)
-    for image in IMAGES:
-        manipulate_image(IMAGES, make_black_and_white)
+    IMAGES = os.listdir(IMAGE_DIR)
+    for i in IMAGES:
+        manipulate_image(i, make_black_and_white)
